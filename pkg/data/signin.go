@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/AlexTsIvanov/OrderService/pkg/data/database"
@@ -39,14 +40,14 @@ func CheckPasswordHash(hash, password string) bool {
 	return err == nil
 }
 
-func GenerateJWT(email, role string) (string, error) {
+func GenerateJWT(id uint, role string) (string, error) {
 	var mySigningKey = []byte(os.Getenv("SECRET_KEY"))
 
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 
 	claims["authorized"] = true
-	claims["email"] = email
+	claims["id"] = strconv.FormatUint(uint64(id), 10)
 	claims["role"] = role
 	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
 

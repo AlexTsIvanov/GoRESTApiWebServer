@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -14,8 +13,7 @@ func (u *User) IsAuthorized(handler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
 		if r.Header["Token"] == nil {
-			err := errors.New("No Token Found")
-			json.NewEncoder(w).Encode(err)
+			_ = json.NewEncoder(w).Encode("No Token Found")
 			return
 		}
 
@@ -29,8 +27,7 @@ func (u *User) IsAuthorized(handler http.Handler) http.Handler {
 		})
 
 		if err != nil {
-			err = errors.New("Your Token has been expired")
-			json.NewEncoder(w).Encode(err)
+			_ = json.NewEncoder(w).Encode("Your Token has been expired")
 			return
 		}
 
@@ -42,8 +39,8 @@ func (u *User) IsAuthorized(handler http.Handler) http.Handler {
 				return
 
 			} else if claims["role"] == "customer" {
-
-				r.Header.Set("Role", "user")
+				r.Header.Set("Role", "customer")
+				r.Header.Set("Userid", fmt.Sprint(claims["id"]))
 				handler.ServeHTTP(w, r)
 				return
 			} else if claims["role"] == "kitchen" {
@@ -53,7 +50,16 @@ func (u *User) IsAuthorized(handler http.Handler) http.Handler {
 				return
 			}
 		}
-		err = errors.New("Not Authorized")
-		json.NewEncoder(w).Encode(err)
+		_ = json.NewEncoder(w).Encode("Not Authorized")
 	})
+}
+
+func CheckPermissions(rw http.ResponseWriter, r *http.Request, roles []string) bool {
+	for _, role := range roles {
+		if role == r.Header["Role"][0] {
+			return true
+		}
+	}
+	http.Error(rw, "Unauthorized to view", http.StatusBadRequest)
+	return false
 }

@@ -39,9 +39,9 @@ type Status struct {
 
 type OrderItem struct {
 	gorm.Model
-	MenuItemID uint
-	Quantity   uint
-	OrderID    uint
+	MenuItemID uint `json:"menu_item_id"`
+	Quantity   uint `json:"quantity"`
+	OrderID    uint `gorm:"default: "`
 }
 
 type Order struct {

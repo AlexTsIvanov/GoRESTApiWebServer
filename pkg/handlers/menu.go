@@ -44,57 +44,67 @@ func (m *Menu) GetMenuItem(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (m *Menu) PostMenu(rw http.ResponseWriter, r *http.Request) {
-	prod := &database.MenuItem{}
+	validUsers := []string{"admin"}
 
-	err := database.FromJSON(r.Body, prod)
-	if err != nil {
-		http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+	if CheckPermissions(rw, r, validUsers) {
+		prod := &database.MenuItem{}
+
+		err := database.FromJSON(r.Body, prod)
+		if err != nil {
+			http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+		}
+
+		data.PostMenu(prod)
 	}
-
-	data.PostMenu(prod)
 }
 
 func (m *Menu) UpdateMenu(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(rw, "Unable to convert id", http.StatusBadRequest)
-		return
-	}
-	prod := &database.MenuItem{}
-	err = database.FromJSON(r.Body, prod)
-	if err != nil {
-		http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
-	}
+	validUsers := []string{"admin"}
 
-	err = data.UpdateMenu(id, prod)
-	if err != nil {
-		http.Error(rw, "MenuItem not found", http.StatusInternalServerError)
-		return
+	if CheckPermissions(rw, r, validUsers) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			http.Error(rw, "Unable to convert id", http.StatusBadRequest)
+			return
+		}
+		prod := &database.MenuItem{}
+		err = database.FromJSON(r.Body, prod)
+		if err != nil {
+			http.Error(rw, "Unable to unmarshal json", http.StatusBadRequest)
+		}
+
+		err = data.UpdateMenu(id, prod)
+		if err != nil {
+			http.Error(rw, "MenuItem not found", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
 func (m *Menu) DeleteMenu(rw http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id, err := strconv.Atoi(vars["id"])
-	if err != nil {
-		http.Error(rw, "Unable to convert id", http.StatusBadRequest)
-		return
-	}
+	validUsers := []string{"admin"}
 
-	err = data.DeleteMenu(id)
-	if err != nil {
-		http.Error(rw, "Error deleting entry", http.StatusInternalServerError)
-		return
+	if CheckPermissions(rw, r, validUsers) {
+		vars := mux.Vars(r)
+		id, err := strconv.Atoi(vars["id"])
+		if err != nil {
+			http.Error(rw, "Unable to convert id", http.StatusBadRequest)
+			return
+		}
+
+		err = data.DeleteMenu(id)
+		if err != nil {
+			http.Error(rw, "Error deleting entry", http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
 func (m *Menu) GetMenuTypes(rw http.ResponseWriter, r *http.Request) {
 
-	//fetch menu from database
 	err := data.GetMenuTypes(rw)
 	if err != nil {
 		http.Error(rw, "Unable to marshal JSON", http.StatusInternalServerError)
 	}
-
 }

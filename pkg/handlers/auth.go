@@ -37,6 +37,7 @@ func (u *User) SignUp(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
+	user.TypeUser = "customer"
 	//insert user details in database
 	data.CreateUser(&user)
 }
@@ -62,7 +63,7 @@ func (u *User) SignIn(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	validToken, err := data.GenerateJWT(authuser.Email, authuser.TypeUser)
+	validToken, err := data.GenerateJWT(authuser.ID, authuser.TypeUser)
 	if err != nil {
 		http.Error(rw, "Failed to generate token", http.StatusInternalServerError)
 		return
@@ -73,4 +74,5 @@ func (u *User) SignIn(rw http.ResponseWriter, r *http.Request) {
 		http.Error(rw, "Unable to marshal json", http.StatusInternalServerError)
 		return
 	}
+
 }

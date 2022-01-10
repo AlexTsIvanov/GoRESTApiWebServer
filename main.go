@@ -22,29 +22,37 @@ func main() {
 
 	sm := mux.NewRouter()
 
-	getRouter := sm.Methods(http.MethodGet).Subrouter()
+	getRouterUnAuth := sm.Methods(http.MethodGet).Subrouter()
+	getRouterUnAuth.HandleFunc("/api/menu", mh.GetMenu)
+	getRouterUnAuth.HandleFunc("/api/menu/{id:[0-9]+}", mh.GetMenuItem)
+	getRouterUnAuth.HandleFunc("/api/menu/types", mh.GetMenuTypes)
 
-	getRouter.HandleFunc("/api/menu/{id:[0-9]+}", mh.GetMenuItem)
-	getRouter.HandleFunc("/api/menu/types", mh.GetMenuTypes)
+	getRouter := sm.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/api/orders", oh.GetOrders)
 	getRouter.HandleFunc("/api/orders/{id:[0-9]+}", oh.GetOrderByID)
 	getRouter.HandleFunc("/api/orders/orderitems", oh.GetOrderItems)
 	getRouter.HandleFunc("/api/orders/orderitems/{id:[0-9]+}", oh.GetOrderItemsByOrderID)
+	getRouter.HandleFunc("/api/orders/orderitems/user", oh.GetOrderItemsByCustomerID)
 	getRouter.Use(uh.IsAuthorized)
-	getRouter.HandleFunc("/api/menu", mh.GetMenu)
+
+	postRouterUnAuth := sm.Methods(http.MethodPost).Subrouter()
+	postRouterUnAuth.HandleFunc("/api/users/signup", uh.SignUp)
+	postRouterUnAuth.HandleFunc("/api/users/signin", uh.SignIn)
 
 	postRouter := sm.Methods(http.MethodPost).Subrouter()
 	postRouter.HandleFunc("/api/menu", mh.PostMenu)
 	postRouter.HandleFunc("/api/orders", oh.PostOrders)
 	postRouter.HandleFunc("/api/orders/orderitems", oh.PostOrderItems)
-	postRouter.HandleFunc("/api/users/signup", uh.SignUp)
-	postRouter.HandleFunc("/api/users/signin", uh.SignIn)
+	postRouter.Use(uh.IsAuthorized)
 
 	putRouter := sm.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/api/menu/{id:[0-9]+}", mh.UpdateMenu)
+	putRouter.HandleFunc("/api/orders/orderitems/user/{itemId:[0-9]+}", oh.PutOrderItemIDByCustomerID)
+	putRouter.Use(uh.IsAuthorized)
 
 	delRouter := sm.Methods(http.MethodDelete).Subrouter()
 	delRouter.HandleFunc("/api/menu/{id:[0-9]+}", mh.DeleteMenu)
+	delRouter.Use(uh.IsAuthorized)
 
 	s := http.Server{
 		Addr:         ":9090",

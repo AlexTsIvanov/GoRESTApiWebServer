@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/AlexTsIvanov/OrderService/pkg/data/database"
@@ -43,12 +44,32 @@ func GetOrderItemsByOrderID(id int, w io.Writer) error {
 	return e.Encode(orderItems)
 }
 
+func GetOrderItemsByCustomerID(id uint, w io.Writer) error {
+	db := database.Connector()
+	var order database.Order
+	db.Where("user_id = ? AND status_id != ?", id, "3").Find(&order)
+	var orderItems []database.OrderItem
+	db.Where("order_id = ?", order.ID).Find(&orderItems)
+	e := json.NewEncoder(w)
+	return e.Encode(orderItems)
+}
+
+func UpdateOrderItemIDByCustomerID(id uint, itemId uint, orderItem *database.OrderItem) error {
+	db := database.Connector()
+	err := db.Model(&database.OrderItem{}).Where("ID = ? AND order_id != ?", itemId, id).Updates(orderItem).Error
+	return err
+}
+
 func PostOrders(m *database.Order) {
 	db := database.Connector()
 	db.Create(&m)
 }
 
-func PostOrderItems(m *database.OrderItem) {
+func PostOrderItems(id uint, m *database.OrderItem) {
 	db := database.Connector()
+	var order database.Order
+	db.Where("user_id = ? AND status_id = ?", id, 1).First(&order)
+	fmt.Println()
+	m.OrderID = order.ID
 	db.Create(&m)
 }
